@@ -6,16 +6,7 @@ const { Users, CurrencyShop } = require('./dbObjects')
 const { Op } = require('sequelize')
 const currency = new Discord.Collection()
 const PREFIX = '!'
-console.log('testtest')
 
-
-//fs.readdir("./events/", (err, files) => {
-  //files.forEach(file => {
-    //const eventHandler = require(`./events/${file}`)
-    //const eventName = file.split(".")[0]
-    //client.on(eventName, (...args) => eventHandler(client, ...args))
-  //})
-//})
 Reflect.defineProperty(currency, 'add', {
 	value: async function add(id, amount) {
 		const user = currency.get(id);
