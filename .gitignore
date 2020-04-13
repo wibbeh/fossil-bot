@@ -37,4 +37,7 @@ node_modules/
 .Trashes
 ehthumbs.db
 Thumbs.db
+<<<<<<< HEAD
 database.sqlite
+=======
+>>>>>>> c1617563056cd5ec1a7e909de608a2fb40e45616
