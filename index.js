@@ -54,10 +54,11 @@ client.on('message', async message => {
 	const input = message.content.slice(PREFIX.length).trim();
 	if (!input.length) return;
 	const [, command, commandArgs] = input.match(/(\w+)\s*([\s\S]*)/);
-	console.log(`${message.mentions.users.first() || message.author} said ${PREFIX}${command} ${commandArgs}`);
+	const target = message.mentions.users.first() || message.author;
+	console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
 
 	if (command === 'balance') {
-		const target = message.mentions.users.first() || message.author;
+		
 		return message.channel.send(`${target.tag} this bitch got ${currency.getBalance(target.id)} fossils`);
 	}else if (command == 'whostanks'){
 		return message.channel.send('J Stanks'); 
@@ -87,7 +88,7 @@ client.on('message', async message => {
             //.addField('to', newContent)
 			message.channel.send(editedEmbed);
 	}else if (command == 'whohas'){
-		const target = message.mentions.users.first() || message.author;
+		
 
 		const item = await CurrencyShop.findOne({ where: { name: { [Op.like]: commandArgs } } });
 		if (!item) return message.channel.send('That fossil doesn\'t exist.');
@@ -104,7 +105,7 @@ client.on('message', async message => {
 
 
     }else if (command === 'inventory') {
-		const target = message.mentions.users.first() || message.author;
+		
 		const user = await Users.findOne({ where: { user_id: target.id } });
 		const items_have = await user.getItemsHave();
 		const items_need = await user.getItemsNeed();
@@ -244,7 +245,7 @@ client.on('message', async message => {
 
 
 	} else if (command === 'butwhataboutMYneeds') {
-		const target = message.mentions.users.first() || message.author;
+		
 		const user = await Users.findOne({ where: { user_id: target.id } });
 		const items_need = await user.getItemsNeed();
 		if (!items_need.length){
@@ -286,7 +287,7 @@ client.on('message', async message => {
 			return message.channel.send(editedEmbed);
 
 		} else if (command === 'communism') {
-			const target = message.mentions.users.first() || message.author;
+			
 			const user = await Users.findOne({ where: { user_id: target.id } });
 			const items_need = await user.getItemsNeedAll();
 			if (!items_need.length){
