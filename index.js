@@ -29,14 +29,15 @@ Reflect.defineProperty(currency, 'getBalance', {
 
 async function getUser(uid, message) {
     try {
-        const userByName = await client.users.fetch(uid);
+        //const userByName = await client.users.fetch(uid);
 		//const member = await guild.users.fetch(uid);
-		const userTag = userByName.tag;
-		if(message)return message.channel.send("<@" + uid + ">");
-		return userByName.tag;
+		//const userTag = userByName.tag;
+		return message ? message.channel.send("<@" + uid + ">") : uid.tag;
+		//return userByName.tag;
 		//return userTag;
     } catch (e) {
-        console.error(e);
+		console.log(e);
+		//return message.channel.send("Unknown user: " + uid);
     }
 }
 
@@ -290,6 +291,7 @@ client.on('message', async message => {
 			
 			const user = await Users.findOne({ where: { user_id: target.id } });
 			const items_need = await user.getItemsNeedAll();
+			var i = 0;
 			if (!items_need.length){
 				return message.channel.send('Looks like everyone already has everything!');
 			}
@@ -327,19 +329,24 @@ client.on('message', async message => {
 				.setTimestamp()
 				.setFooter(`Originally sent:`)
 				for(var key in kvpNeed){
-					if(kvpHave[key]){
+					if(i<25){
+					const kvpHaveString = kvpNeed[key];
+					const kvpNeedString = kvpHave[key];
+					if(kvpHave[key] && editedEmbed.length < (6000 - (kvpNeedString.length*23 + kvpHaveString.length + 30))){
 					editedEmbed.addFields(
 						{ name: `${key}:`, value: `Who needs: ${kvpNeed[key]}\n Who has: ${kvpHave[key]}` },
 						//{ name: '\u200B', value: '\u200B' },
 						//{ name: 'Needs:', value: `${need_list}`, },
 						//{ name: 'Inline field title', value: 'Some value here', inline: true },
 					)
+					i++;
 					}
+				}
 				}
 				
 				//.setDescription(`${item_list}`)
 				//.addField('to', newContent)
-				return message.channel.send(editedEmbed);		
+					return message.channel.send(editedEmbed);		
 		
 	} else if (command === 'museum') {
 		const items = await CurrencyShop.findAll();
