@@ -27,6 +27,7 @@
 *.sqlite
 .env
 node_modules/
+testdb/
 
 # OS generated files #
 ######################
