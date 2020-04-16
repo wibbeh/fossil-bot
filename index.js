@@ -106,8 +106,7 @@ client.on("message", async (message) => {
         {
           name: "!communism",
           value: `Attempts to match up all HAVE and NEED lists (WIP)`,
-        },
-        { name: "!whostanks", value: `tells the truth` }
+        }
         //{ name: 'Inline field title', value: 'Some value here', inline: true },
       );
     //.setDescription(`${item_list}`)
