@@ -76,8 +76,8 @@ sequelize
       Items.upsert({ name: "Megacero Torso", cost: 0 }),
       Items.upsert({ name: "Megacero Tail", cost: 0 }),
 
-      Items.upsert({ name: "Megalo Left Side", cost: 0 }),
-      Items.upsert({ name: "Megalo Right Side", cost: 0 }),
+      Items.upsert({ name: "Left Megalo Side", cost: 0 }),
+      Items.upsert({ name: "Right Megalo Side", cost: 0 }),
 
       Items.upsert({ name: "MYLLOKUNMINGIA", cost: 0 }),
 

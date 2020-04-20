@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       name: {
         unique: true,
-        type: `citext`,
+        type: DataTypes.STRING,
       },
       cost: {
         type: DataTypes.INTEGER,
