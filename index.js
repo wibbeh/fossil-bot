@@ -453,8 +453,8 @@ client.on("message", async (message) => {
       .setFooter(`Originally sent:`);
     for (var key in kvpNeed) {
       if (i < 25) {
-        const kvpHaveString = kvpNeed[key];
-        const kvpNeedString = kvpHave[key];
+        const kvpHaveString = kvpHave[key];
+        const kvpNeedString = kvpNeed[key];
         if (
           kvpHave[key] &&
           editedEmbed.length <
