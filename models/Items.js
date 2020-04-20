@@ -1,15 +1,22 @@
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
-    "users",
+    "items",
     {
-      uid: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-      },
-      balance: {
+      id: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
+        primaryKey: true,
         allowNull: false,
+        autoIncrement: true,
+        unique: true,
+      },
+      name: {
+        unique: true,
+        type: `citext`,
+      },
+      cost: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        default: 0,
       },
     },
     {

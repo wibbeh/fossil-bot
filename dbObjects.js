@@ -5,113 +5,191 @@ const { Op } = require("sequelize");
 const sequelize = new Sequelize("database", "username", "password", {
   host: "localhost",
   dialect: "sqlite",
-  logging: false,
-  storage: "database.sqlite",
+  logging: console.log,
+  storage: "acitems.sqlite",
 });
 
 const Users = sequelize.import("models/Users");
-const CurrencyShop = sequelize.import("models/CurrencyShop");
+const Items = sequelize.import("models/Items");
 const UserItems = sequelize.import("models/UserItems");
+const Guilds = sequelize.import("models/Guilds");
+const Guild_users = sequelize.import("models/Guild_users");
 
-UserItems.belongsTo(CurrencyShop, { foreignKey: "item_id", as: "item" });
+Guilds.belongsToMany(Users, {
+  as: `gtou`,
+  through: Guild_users,
+  foreignKey: `guild_id`,
+  otherKey: `user_id`,
+});
+
+Users.belongsToMany(Guilds, {
+  as: `utog`,
+  through: Guild_users,
+  foreignKey: `user_id`,
+  otherKey: `guild_id`,
+});
+
+Items.belongsToMany(Users, {
+  as: `itou`,
+  through: UserItems,
+  foreignKey: `item_id`,
+  otherKey: `user_id`,
+});
+
+Users.belongsToMany(Items, {
+  as: `utoi`,
+  through: UserItems,
+  foreignKey: `user_id`,
+  otherKey: `item_id`,
+});
+
+//UserItems.belongsTo(Items, { foreignKey: "item_id", as: "item" });
+//UserItems.belongsTo(Users, { foreignKey: "user_id", as: "uid" });
+//Users.belongsTo(Guilds, { foreignKey: "guild_id", as: "gid" });
 
 Users.prototype.getFossilItem = async function (name) {
-  return (fossilName = await CurrencyShop.findOne({
+  return (fossilName = await Items.findOne({
     where: { name: { [Op.like]: name } },
   }));
 };
 
 Users.prototype.addHave = async function (item) {
-  const userItem = await UserItems.findOne({
-    where: { user_id: this.user_id, item_id: item.id },
-  });
+  const thisUser = this;
+  const UserItems = await thisUser.getUtoi({ where: { name: item } });
+  //console.log(userItems);
 
-  if (userItem) {
-    userItem.amount_have += 1;
-    userItem.amount_need = 0;
-    return userItem.save();
+  if (UserItems.length) {
+    for (i in UserItems) {
+      UserItems[i].dataValues.user_items.amount_have += 1;
+      UserItems[i].dataValues.user_items.save();
+      return UserItems[i].name;
+    }
+  } else {
+    return await Items.findOne({
+      where: { name: { [Op.like]: item } },
+    }).then(function (gotItem) {
+      if (gotItem) {
+        thisUser.addUtoi(gotItem, {
+          through: { item_id: gotItem.id, amount_need: 0, amount_have: 1 },
+        });
+        return gotItem.name;
+      }
+    });
   }
-
-  return UserItems.create({
-    user_id: this.user_id,
-    item_id: item.id,
-    amount_have: 1,
-    amount_need: 0,
-  });
 };
 
 Users.prototype.addNeed = async function (item) {
-  const userItem = await UserItems.findOne({
-    where: { user_id: this.user_id, item_id: item.id },
-  });
+  const thisUser = this;
+  const UserItems = await thisUser.getUtoi({ where: { name: item } });
+  //console.log(userItems);
 
-  if (userItem) {
-    userItem.amount_need = 1;
-    userItem.amount_have = 0;
-    return userItem.save();
+  if (UserItems.length) {
+    for (i in UserItems) {
+      UserItems[i].dataValues.user_items.amount_need += 1;
+      UserItems[i].dataValues.user_items.save();
+      return UserItems[i].name;
+    }
+  } else {
+    return await Items.findOne({
+      where: { name: { [Op.like]: item } },
+    }).then(function (gotItem) {
+      if (gotItem) {
+        thisUser.addUtoi(gotItem, {
+          through: { item_id: gotItem.id, amount_need: 1, amount_have: 0 },
+        });
+        return gotItem.name;
+      }
+    });
   }
-
-  return UserItems.create({
-    user_id: this.user_id,
-    item_id: item.id,
-    amount_have: 0,
-    amount_need: 1,
-  });
 };
 
 Users.prototype.removeFossil = async function (item) {
-  const userItem = await UserItems.findOne({
-    where: { user_id: this.user_id, item_id: item.id },
-  });
+  const thisUser = this;
+  const UserItems = await thisUser.getUtoi({ where: { name: item } });
+  //console.log(userItems);
 
-  if (userItem) {
-    userItem.amount_need = 0;
-    userItem.amount_have = 0;
-    return userItem.save();
+  if (UserItems.length) {
+    for (i in UserItems) {
+      UserItems[i].dataValues.user_items.amount_need = 0;
+      UserItems[i].dataValues.user_items.amount_have = 0;
+      UserItems[i].dataValues.user_items.save();
+      return UserItems[i].name;
+    }
+  } else {
+    return false;
   }
-
-  return;
 };
 
-Users.prototype.getItemsHave = function () {
-  return UserItems.findAll({
+Users.prototype.getUserItems = async function () {
+  //const userItems2 = await this.getUtoi({ where: { amount_have: 2 } });
+  const userItems = await this.getUtoi();
+  return userItems;
+};
+
+Users.prototype.getItemsHaveAllItem = async function (item, guildID) {
+  return await Users.findAll({
+    include: {
+      model: Guilds,
+      as: `utog`,
+      where: { gid: guildID },
+    },
+    include: {
+      model: Items,
+      as: `utoi`,
+      where: { name: { [Op.like]: item } },
+      through: { where: { amount_have: { [Op.ne]: 0 } } },
+    },
+  }).then(function (users) {
+    return users;
+  });
+};
+
+Users.prototype.getItemsNeedAll = async function (guildID) {
+  return await Users.findAll({
+    include: {
+      model: Guilds,
+      as: `utog`,
+      where: { gid: guildID },
+    },
+    include: {
+      model: Items,
+      as: `utoi`,
+      through: { where: { amount_need: { [Op.ne]: 0 } } },
+    },
+  }).then(function (users) {
+    return users;
+  });
+};
+
+Users.prototype.getItemsNeedUser = async function () {
+  //const userItems = await this.getUtoi({ where: { amount_need: 1 } });
+  //return userItems;
+  const userItems = await this.getUtoi();
+  //const userItems = user.getUtoi();
+  return userItems
+    .map((i) => (i.user_items.amount_need ? i.name : ``))
+    .filter(Boolean);
+};
+
+Guilds.prototype.getGuildUsers = async function () {
+  return await this.getGtou();
+};
+Users.prototype.get2GuildUser = function () {
+  return Users.findOne({
     where: {
       user_id: this.user_id,
-      amount_have: {
-        [Op.ne]: 0,
-      },
     },
-    include: ["item"],
+    include: ["gid"],
   });
 };
 
-Users.prototype.getItemsHaveAll = function (item) {
-  return UserItems.findAll({
-    where: { item_id: item.id, amount_have: { [Op.ne]: 0 } },
-  });
-};
-
-Users.prototype.getItemsNeed = function () {
-  return UserItems.findAll({
+Users.prototype.getGuildUserAll = function () {
+  return Users.findAll({
     where: {
       user_id: this.user_id,
-      amount_need: {
-        [Op.ne]: 0,
-      },
     },
-    include: ["item"],
+    include: [`gid`],
   });
 };
 
-Users.prototype.getItemsNeedAll = function () {
-  return UserItems.findAll({
-    where: {
-      amount_need: {
-        [Op.ne]: 0,
-      },
-    },
-    include: ["item"],
-  });
-};
-
-module.exports = { Users, CurrencyShop, UserItems };
+module.exports = { Users, Items, UserItems, Guilds, Guild_users };

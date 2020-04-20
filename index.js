@@ -2,68 +2,147 @@ require("dotenv").config();
 const Discord = require("discord.js");
 const client = new Discord.Client();
 //const fs = require("fs")
-const { Users, CurrencyShop } = require("./dbObjects");
+const { Users, Items, UserItems, Guilds, Guild_users } = require("./dbObjects");
 const { Op } = require("sequelize");
-const currency = new Discord.Collection();
+const userList = new Discord.Collection();
+const newGuild = new Discord.Collection();
+const newUser = new Discord.Collection();
+const guildMembers = new Discord.Collection();
+const userFunctions = new Discord.Collection();
 const PREFIX = "!";
 
-Reflect.defineProperty(currency, "add", {
-  value: async function add(id, amount) {
-    const user = currency.get(id);
-    if (user) {
-      user.balance += Number(amount);
-      return user.save();
-    }
-    const newUser = await Users.create({ user_id: id, balance: amount });
-    currency.set(id, newUser);
-    return newUser;
+Reflect.defineProperty(userFunctions, "getGuild", {
+  value: async function getGuild(guild_id) {
+    return Guilds.findOne({
+      where: { gid: guild_id },
+    }).then((guild) => {
+      return guild;
+    });
   },
 });
 
-Reflect.defineProperty(currency, "getBalance", {
-  value: function getBalance(id) {
-    const user = currency.get(id);
-    return user ? user.balance : 0;
+Reflect.defineProperty(userFunctions, "getUser", {
+  value: async function add(_target) {
+    return Users.findOne({
+      where: { uid: _target.id },
+    }).then((user) => {
+      if (user) {
+        //user.balance += Number(amount);
+        return user;
+      } else {
+        return Users.create({
+          uid: _target.id,
+          balance: 10,
+        }).then(function (_newUser) {
+          const _guild = Guilds.findOne({
+            where: { gid: _target.lastMessage.channel.guild.id },
+          }).then(function (thisGuild) {
+            _newUser.addUtog(thisGuild);
+          });
+          return _newUser;
+        });
+      }
+    });
   },
 });
 
-async function getUser(uid, message) {
-  try {
-    //const userByName = await client.users.fetch(uid);
-    //const member = await guild.users.fetch(uid);
-    //const userTag = userByName.tag;
-    return message ? message.channel.send("<@" + uid + ">") : uid.tag;
-    //return userByName.tag;
-    //return userTag;
-  } catch (e) {
-    console.log(e);
-    //return message.channel.send("Unknown user: " + uid);
-  }
-}
+Reflect.defineProperty(newGuild, "add", {
+  value: async function add(guild) {
+    const boop = await Guilds.create({ gid: guild.id })
+      .then(async function (guilds) {
+        guild.members.fetch().then(async function (m) {
+          m.map(async function (mem) {
+            const usr = await Users.findOrCreate({
+              where: { uid: mem.id, balance: 10 },
+              defaults: { uid: mem.id, balance: 10 },
+            }).then(function (result) {
+              var u = result[0],
+                created = result[1];
+              guilds.addGtou(u);
+            });
+          });
+        });
+      })
+      .catch((guilds) => {
+        console.log(guilds);
+      });
+    return boop;
+  },
+});
+
+Reflect.defineProperty(newGuild, "blip", {
+  value: async function blip(guild) {
+    const boop = await Guilds.destroy({
+      where: { gid: guild.id },
+    }).catch((guilds) => {
+      console.log(guilds);
+    });
+    return boop;
+  },
+});
+
+Reflect.defineProperty(newUser, "add", {
+  value: async function add(target) {
+    const usr = await Users.create({ uid: target.id, balance: 10 })
+      .then(function (u) {
+        u.addUtog(target.lastMessage.channel.guild.id);
+      })
+      .catch((u) => {
+        console.log(u);
+      });
+  },
+});
 
 client.once("ready", async () => {
-  const storedBalances = await Users.findAll();
-  storedBalances.forEach((b) => currency.set(b.user_id, b));
+  //const storedBalances =
+  //storedBalances.forEach((b) => userList.set(b.user_id, b));
+
   console.log(`Logged in as ${client.user.tag}!`);
+});
+
+client.on("guildCreate", async (guild) => {
+  console.log("Joined a new guild: " + guild.name);
+  const boop = await newGuild.add(guild);
+});
+
+client.on("guildMemberAdd", (member) => {
+  // Add member to guild db
+  console.log(member.id + ` has joined the guild ` + member.guild.name);
+  newUser.add(member.id);
+  console.log(member.id + ` added to guild db`);
+});
+
+client.on("guildDelete", async (guild) => {
+  console.log("Left a guild: " + guild.name);
+  const boop = await newGuild.blip(guild);
+  console.log(boop);
 });
 
 client.on("message", async (message) => {
   if (message.author.bot) return;
-  currency.add(message.author.id, 1);
+  //userList.add(message.author.id, 1);
 
   if (!message.content.startsWith(PREFIX)) return;
+
   const input = message.content.slice(PREFIX.length).trim();
   if (!input.length) return;
   const [, command, commandArgs] = input.match(/(\w+)\s*([\s\S]*)/);
   const target = message.mentions.users.first() || message.author;
+
   console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
 
   if (command === "balance") {
+    const _user = await userFunctions.getUser(target);
     return message.channel.send(
-      `${target.tag} this bitch got ${currency.getBalance(target.id)} fossils`
+      `${target.tag} this bitch got ${_user.dataValues.balance} bells`
     );
   } else if (command == "whostanks") {
     return message.channel.send("J Stanks");
+  } else if (command == "test") {
+    console.log(`test`);
+
+    console.log(kvpHave.join(", "));
+    console.log(kvpNeed).join(", ");
   } else if (command == "help") {
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`Fossil Bot Cheat Sheet`)
@@ -113,29 +192,53 @@ client.on("message", async (message) => {
     //.addField('to', newContent)
     message.channel.send(editedEmbed);
   } else if (command == "whohas") {
-    const item = await CurrencyShop.findOne({
-      where: { name: { [Op.like]: commandArgs } },
-    });
-    if (!item) return message.channel.send("That fossil doesn't exist.");
-
-    const user = await Users.findOne({ where: { user_id: target.id } });
-    //const user_list = await UserItems.findAll({ where: { amount_have: { [Op.eq]: 1 } } });
-
-    const user_list = await user.getItemsHaveAll(item);
-
-    //return message.channel.send(`${target.tag} these dudes ${user_list.map(t => `${getUser(`${t.user_id}`)}`).join(', ')}`);
-    message.channel.send(`The following users have a(n) ${item.name}:`);
-    return user_list.map((t) => `${getUser(`${t.user_id}`, message)}`);
-    //return message.channel.send(`You've successfully done the thing ${item.name}`);
+    var argArr = commandArgs.split(",");
+    const _user = await userFunctions.getUser(target);
+    const addedList = [];
+    //console.log(_user);
+    if (argArr.length > 1) {
+      message.channel.send(`Hoo! More than one, I see!`);
+    }
+    if (argArr.length > 0) {
+      for (_item in argArr) {
+        addedList.push(
+          await _user.getItemsHaveAllItem(
+            argArr[_item].toUpperCase().trim(),
+            message.guild.id
+          )
+        );
+      }
+      if (addedList.length) {
+        for (thing of addedList) {
+          if (thing.length) {
+            const users_to_send = thing.map((u) => `${"<@" + u.uid + ">"}`);
+            message.channel.send(
+              `The following users have a(n) ${thing[0].utoi[0].name}`
+            );
+            message.channel.send(users_to_send);
+          } else {
+            message.channel.send(
+              `Wuh-oh... It doesn\'t look like anyone has a(n) "${
+                argArr[addedList.indexOf(thing)]
+              }" `
+            );
+          }
+        }
+      }
+      console.log(addedList);
+    }
   } else if (command === "inventory") {
-    const user = await Users.findOne({ where: { user_id: target.id } });
-    const items_have = await user.getItemsHave();
-    const items_need = await user.getItemsNeed();
+    const user = await Users.findOne({ where: { uid: target.id } });
+    const userItems = await user.getUserItems();
 
-    if (!items_have.length && !items_need.length)
+    if (!userItems.length)
       return message.channel.send(`${target.tag} ain't got no fossils!`);
-    const have_list = `${items_have.map((t) => `${t.item.name}`).join(", ")}`;
-    const need_list = `${items_need.map((t) => `${t.item.name}`).join(", ")}`;
+    const have_list = userItems
+      .map((t) => (t.user_items.amount_have ? t.name : ``))
+      .filter(Boolean); //.join(", ")}`;
+    const need_list = userItems
+      .map((t) => (t.user_items.amount_need ? t.name : ``))
+      .filter(Boolean);
 
     //const have_list_css = String("```yaml\n${have_list}```");
     const editedEmbed = new Discord.MessageEmbed()
@@ -147,183 +250,157 @@ client.on("message", async (message) => {
       .addFields(
         {
           name: "Has:",
-          value: `${have_list ? have_list : `Nothing. Zip. Zero. Zilch`}`,
+          value: `${
+            have_list.length ? have_list : `Nothing. Zip. Zero. Zilch`
+          }`,
         },
         //{ name: '\u200B', value: '\u200B' },
         {
           name: "Needs:",
-          value: `${need_list ? need_list : `Nothing. Zip. Zero. Zilch`}`,
+          value: `${
+            need_list.length ? need_list : `Nothing. Zip. Zero. Zilch`
+          }`,
         }
-        //{ name: 'Inline field title', value: 'Some value here', inline: true },
       );
-    //.setDescription(`${item_list}`)
-    //.addField('to', newContent)
     message.channel.send(editedEmbed);
-  } else if (command === "transfer") {
-    const currentAmount = currency.getBalance(message.author.id);
-    const transferAmount = commandArgs
-      .split(/ +/)
-      .find((arg) => !/<@!?\d+>/.test(arg));
-    const transferTarget = message.mentions.users.first();
-
-    if (!transferAmount || isNaN(transferAmount))
-      return message.channel.send(
-        `Sorry ${message.author}, that's an invalid amount`
-      );
-    if (transferAmount > currentAmount)
-      return message.channel.send(
-        `Sorry ${message.author}, you don\'t have that much.`
-      );
-    if (transferAmount <= 0)
-      return message.channel.send(
-        `Please enter an amount greater than zero, ${message.author}`
-      );
-
-    currency.add(message.author.id, -transferAmount);
-    currency.add(transferTarget.id, transferAmount);
-
-    return message.channel.send(
-      `Successfully transferred ${transferAmount}💰 to ${
-        transferTarget.tag
-      }. Your current balance is ${currency.getBalance(message.author.id)}💰`
-    );
   } else if (command === "bury") {
-    //
     var argArr = commandArgs.split(",");
-    var addedList = [];
-    const user = await Users.findOne({ where: { user_id: message.author.id } });
-    if (argArr.length > 1) message.channel.send(`Hoo! More than one, I see!`);
-    for (const arg of argArr) {
-      const item = await user.getFossilItem(arg.trim());
-      if (!item) {
-        message.channel.send(
-          `Wuh-oh... I can\'t seem to find ${arg} in our collection!`
-        );
-      } else {
-        await user.removeFossil(item);
-        var argUp = arg.replace(/(^\w{1})|(\s{1}\w{1})/g, (match) =>
-          match.toUpperCase()
-        );
-        addedList.push(argUp);
+    const _user = await userFunctions.getUser(target);
+    const addedList = [];
+    //console.log(_user);
+    if (argArr.length > 1) {
+      message.channel.send(`Hoo! More than one, I see!`);
+    }
+    if (argArr.length > 0) {
+      for (_item in argArr) {
+        if (await _user.removeFossil(argArr[_item].toUpperCase().trim())) {
+          addedList.push(argArr[_item].toUpperCase().trim());
+        } else {
+          message.channel.send(
+            `Wuh-oh... I can\'t seem to find "${argArr[_item]}" in your inventory!`
+          );
+        }
+      }
+
+      message.channel.send(`The following fossil(s) have been buried:`);
+      if (addedList.length) {
+        for (str in addedList) {
+          message.channel.send(
+            addedList[str]
+              .toLowerCase()
+              .split(" ")
+              .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+              .join(" ")
+          );
+        }
       }
     }
-    //const item = await CurrencyShop.findOne({ where: { name: { [Op.ilike]: commandArgs } } });
 
-    //if (item.cost > currency.getBalance(message.author.id)) {
-    //	return message.channel.send(`You don't have enough bells, ${message.author}`);
-    //}
-
-    //currency.add(message.author.id, -item.cost);
-    //await user.addHave(item);
-
-    return message.channel.send(
-      `The following fossil(s) have been buried: ${addedList}`
-    );
+    //
   } else if (command === "have") {
-    //
     var argArr = commandArgs.split(",");
-    var addedList = [];
-    const user = await Users.findOne({ where: { user_id: message.author.id } });
-    if (argArr.length > 1) message.channel.send(`Hoo! More than one, I see!`);
-    for (const arg of argArr) {
-      const item = await user.getFossilItem(arg.trim());
-      if (!item) {
-        message.channel.send(
-          `Wuh-oh... I can\'t seem to find ${arg} in our collection!`
-        );
-      } else {
-        await user.addHave(item);
-        var argUp = arg.replace(/(^\w{1})|(\s{1}\w{1})/g, (match) =>
-          match.toUpperCase()
-        );
-        addedList.push(argUp);
+    const _user = await userFunctions.getUser(target);
+    const addedList = [];
+    //console.log(_user);
+    if (argArr.length > 1) {
+      message.channel.send(`Hoo! More than one, I see!`);
+    } else if (argArr.length > 0) {
+      for (_item in argArr) {
+        if (await _user.addHave(argArr[_item].toUpperCase().trim())) {
+          addedList.push(argArr[_item].toUpperCase().trim());
+        } else {
+          message.channel.send(
+            `Wuh-oh... I can\'t seem to find "${argArr[_item]}" in our collection!`
+          );
+        }
+      }
+
+      message.channel.send(
+        `The following fossil(s) have been added to your inventory:`
+      );
+      if (addedList.length) {
+        for (str in addedList) {
+          message.channel.send(
+            addedList[str]
+              .toLowerCase()
+              .split(" ")
+              .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+              .join(" ")
+          );
+        }
       }
     }
-    //const item = await CurrencyShop.findOne({ where: { name: { [Op.ilike]: commandArgs } } });
-
-    //if (item.cost > currency.getBalance(message.author.id)) {
-    //	return message.channel.send(`You don't have enough bells, ${message.author}`);
-    //}
-
-    //currency.add(message.author.id, -item.cost);
-    //await user.addHave(item);
-
-    return message.channel.send(
-      `The following fossil(s) have been added to your inventory: ${addedList}`
-    );
   } else if (command === "need") {
     var argArr = commandArgs.split(",");
-    var addedList = [];
-    const user = await Users.findOne({ where: { user_id: message.author.id } });
-    if (argArr.length > 1)
-      message.channel.send(`Hoo! More than one, I see!...you greedy bitch`);
-    for (const arg of argArr) {
-      const item = await user.getFossilItem(arg.trim());
-      if (!item) {
-        message.channel.send(
-          `Wuh-oh... I can\'t seem to find ${arg} in our collection!`
-        );
-      } else {
-        await user.addNeed(item);
-        var argUp = arg.replace(/(^\w{1})|(\s{1}\w{1})/g, (match) =>
-          match.toUpperCase()
-        );
-        addedList.push(argUp);
+    const _user = await userFunctions.getUser(target);
+    const addedList = [];
+    //console.log(_user);
+    if (argArr.length > 1) {
+      message.channel.send(`Hoo! More than one, I see!`);
+    }
+    if (argArr.length > 0) {
+      for (_item in argArr) {
+        if (await _user.addNeed(argArr[_item].toUpperCase().trim())) {
+          addedList.push(argArr[_item].toUpperCase().trim());
+        } else {
+          message.channel.send(
+            `Wuh-oh... I can\'t seem to find "${argArr[_item]}" in our collection!`
+          );
+        }
+      }
+
+      message.channel.send(
+        `The following fossil(s) have been added to your inventory:`
+      );
+      if (addedList.length) {
+        for (str in addedList) {
+          message.channel.send(
+            addedList[str]
+              .toLowerCase()
+              .split(" ")
+              .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+              .join(" ")
+          );
+        }
       }
     }
-    //const item = await CurrencyShop.findOne({ where: { name: { [Op.ilike]: commandArgs } } });
+    //`Wuh-oh... I can\'t seem to find ${arg} in our collection!`
 
-    //if (item.cost > currency.getBalance(message.author.id)) {
-    //	return message.channel.send(`You don't have enough bells, ${message.author}`);
-    //}
-
-    //currency.add(message.author.id, -item.cost);
-    //await user.addHave(item);
-
-    return message.channel.send(
-      `The following fossil(s) have been added to your NEED list: ${addedList}`
-    );
-    //const item = await CurrencyShop.findOne({ where: { name: { [Op.like]: commandArgs } } });
-    //if (!item) return message.channel.send('That fossil doesn\'t exist.');
-    //if (item.cost > currency.getBalance(message.author.id)) {
-    //	return message.channel.send(`You don't have enough bells, ${message.author}`);
-    //}
-
-    //const user = await Users.findOne({ where: { user_id: message.author.id } });
-    //currency.add(message.author.id, -item.cost);
-    //await user.addNeed(item);
-
-    //return message.channel.send(`You've successfully added a(n) ${item.name} to your NEED list!`);
+    //var argUp = arg.replace(/(^\w{1})|(\s{1}\w{1})/g, (match) =>
   } else if (command === "butwhataboutMYneeds") {
-    const user = await Users.findOne({ where: { user_id: target.id } });
-    const items_need = await user.getItemsNeed();
-    if (!items_need.length) {
-      return message.channel.send("Looks like you already have everything!");
-    }
+    const user = await userFunctions.getUser(target);
+    //const userItems = await user.getUserItems();
+    const userItemsNeed = await user.getItemsNeedUser();
+    console.log(userItemsNeed);
+    if (!userItemsNeed.length)
+      return message.channel.send(
+        `${target.tag}, looks like you don't need anything!`
+      );
     var kvp = {};
-
-    for (const item_name of items_need.map((t) => `${t.item.name}`)) {
-      const item_id = await CurrencyShop.findOne({
-        where: { name: { [Op.like]: item_name } },
-      });
-      const user_list = await user.getItemsHaveAll(item_id);
-      if (user_list.length) {
-        //message.channel.send(`The following users have a(n) ${item_name}:`)
-        //user_list.map(t => `${getUser(`${t.user_id}`, message)}`);
-        //"<@" + uid + ">"
-        kvp[`${item_name}`] = user_list.map((t) => `${"<@" + t.user_id + ">"}`);
-        //kvpconsole.log(kvp[`${item_name}`]);
+    for (item in userItemsNeed) {
+      if (userItemsNeed[item]) {
+        const have_list = await user.getItemsHaveAllItem(
+          userItemsNeed[item],
+          target.lastMessage.channel.guild.id
+        );
+        //console.log(have_list);
+        if (have_list.length) {
+          kvp[`${userItemsNeed[item]}`] = have_list.map(
+            (t) => `${"<@" + t.uid + ">"}`
+          );
+        }
       }
     }
+    console.log(kvp);
     const editedEmbed = new Discord.MessageEmbed()
-      .setTitle(`Big ol' list of shit having`)
+      .setTitle(`MY needs`)
       .setAuthor(`hoo HOO!`)
       .setColor("00ff00")
       .setTimestamp()
       .setFooter(`Originally sent:`);
     for (var key in kvp) {
       editedEmbed.addFields(
-        { name: `${key}`, value: `${kvp[key]}` }
+        { name: `${key}`, value: `Who has: ${kvp[key]}` }
         //{ name: '\u200B', value: '\u200B' },
         //{ name: 'Needs:', value: `${need_list}`, },
         //{ name: 'Inline field title', value: 'Some value here', inline: true },
@@ -334,46 +411,39 @@ client.on("message", async (message) => {
     //.addField('to', newContent)
     return message.channel.send(editedEmbed);
   } else if (command === "communism") {
-    const user = await Users.findOne({ where: { user_id: target.id } });
-    const items_need = await user.getItemsNeedAll();
-    var i = 0;
-    if (!items_need.length) {
-      return message.channel.send(
-        "Looks like everyone already has everything!"
-      );
-    }
-    var kvpNeed = new Map();
-    var kvpHave = new Map();
+    const guild_id = message.guild.id;
+    const guild = await userFunctions.getGuild(guild_id);
+    const guildUsers = await guild.getGuildUsers();
+    var i = 1;
+    console.log(guildUsers);
 
-    //for (const item_name of items_need.map(t => `${t.item.name} is needed by \n ${ "<@" + t.user_id + ">"}`)){
-    for (const item_name of items_need) {
-      //var needMention = [];
-      //needMention.push(`${"<@" + item_name.user_id + ">"}`);
-      if (kvpNeed[`${item_name.item.name}`]) {
-        kvpNeed[`${item_name.item.name}`] += `${
-          " <@" + item_name.user_id + ">"
-        }`;
-      } else {
-        kvpNeed[`${item_name.item.name}`] = `${"<@" + item_name.user_id + ">"}`;
-      }
-      //`${needMention}`;//.map(t => `${t.item.name} is needed by \n ${ "<@" + t.user_id + ">"}`)){
-      //const item_id = await CurrencyShop.findOne({ where: { name: { [Op.like]: item_name.replace(/ is.*/,'').replace(/\n.*/,'') } } });
-      const item_id = await CurrencyShop.findOne({
-        where: { name: { [Op.like]: item_name.item.name } },
-      });
-      const user_list = await user.getItemsHaveAll(item_id);
-      if (user_list.length) {
-        //message.channel.send(`The following users have a(n) ${item_name}:`)
-        //user_list.map(t => `${getUser(`${t.user_id}`, message)}`);
-        //"<@" + uid + ">"
-        kvpHave[`${item_name.item.name}`] = user_list.map(
-          (t) => `${"<@" + t.user_id + "> "}`
-        );
+    //const userItemsNeed = await
 
-        //kvp[`${item_name}`] = user_list.map(t => `${getUser(t.user_id)}`);
-        //kvpconsole.log(kvp[`${item_name}`]);
+    const kvpHave = {};
+    const kvpNeed = {};
+
+    for (user of guildUsers) {
+      console.log(user);
+      const userItemsNeed = await user.getItemsNeedUser();
+      console.log(userItemsNeed);
+      for (item of userItemsNeed) {
+        const whoHas = await user.getItemsHaveAllItem(item, guild_id);
+        console.log(whoHas);
+        if (whoHas.length) {
+          kvpHave[item] = whoHas.map((t) => `${"<@" + t.uid + ">"}`);
+
+          if (kvpNeed[item]) {
+            const tmp = [];
+            tmp.push(kvpNeed[item]);
+            tmp.push(`${"<@" + user.uid + ">"}`);
+            kvpNeed[item] = tmp.filter(Boolean);
+          } else {
+            kvpNeed[item] = `${"<@" + user.uid + ">"}`;
+          }
+        }
       }
     }
+
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`Fossils for the people`)
       .setAuthor(`hoo HOO!`)
@@ -392,7 +462,7 @@ client.on("message", async (message) => {
           editedEmbed.addFields(
             {
               name: `${key}:`,
-              value: `Who needs: ${kvpNeed[key]}\n Who has: ${kvpHave[key]}`,
+              value: `Who needs: ${kvpNeedString}\n Who has: ${kvpHaveString}`,
             }
             //{ name: '\u200B', value: '\u200B' },
             //{ name: 'Needs:', value: `${need_list}`, },
@@ -407,26 +477,11 @@ client.on("message", async (message) => {
     //.addField('to', newContent)
     return message.channel.send(editedEmbed);
   } else if (command === "museum") {
-    const items = await CurrencyShop.findAll();
+    const itemList = await Items.findAll();
     message.channel.send(`We currently have the following exhibits:`);
-    return message.channel.send(items.map((i) => `${i.name}`).join("\n"), {
+    return message.channel.send(itemList.map((i) => `${i.name}`).join("\n"), {
       code: true,
     });
-  } else if (command === "leaderboard") {
-    return message.channel.send(
-      currency
-        .sort((a, b) => b.balance - a.balance)
-        .filter((user) => client.users.has(user.user_id))
-        .first(10)
-        .map(
-          (user, position) =>
-            `(${position + 1}) ${client.users.get(user.user_id).tag}: ${
-              user.balance
-            }💰`
-        )
-        .join("\n"),
-      { code: true }
-    );
   }
 });
 

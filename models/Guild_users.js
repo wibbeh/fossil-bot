@@ -1,15 +1,19 @@
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
-    "users",
+    "guild_users",
     {
-      uid: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-      },
-      balance: {
+      id: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
+        primaryKey: true,
         allowNull: false,
+        autoIncrement: true,
+        unique: true,
+      },
+      user_id: {
+        type: DataTypes.STRING,
+      },
+      guild_id: {
+        type: DataTypes.STRING,
       },
     },
     {

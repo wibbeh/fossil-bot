@@ -1,18 +1,17 @@
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
-    "currency_shop",
+    "guilds",
     {
-      name: {
+      gid: {
         type: DataTypes.STRING,
-        unique: true,
-      },
-      cost: {
-        type: DataTypes.INTEGER,
+        primaryKey: true,
         allowNull: false,
+        unique: true,
       },
     },
     {
       timestamps: false,
+      freezeTableName: true,
     }
   );
 };

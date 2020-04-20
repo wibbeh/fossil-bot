@@ -1,7 +1,14 @@
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
-    "user_item",
+    "user_items",
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+        autoIncrement: true,
+        unique: true,
+      },
       user_id: DataTypes.STRING,
       item_id: DataTypes.STRING,
       amount_have: {
@@ -17,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       timestamps: false,
+      freezeTableName: true,
     }
   );
 };
