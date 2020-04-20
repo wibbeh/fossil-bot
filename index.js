@@ -131,6 +131,10 @@ client.on("message", async (message) => {
 
   console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
 
+  if (target.id == `687803445423374366`) {
+    message.channel.send(`Pucker up!`);
+  }
+
   if (command === "balance") {
     const _user = await userFunctions.getUser(target);
     return message.channel.send(
