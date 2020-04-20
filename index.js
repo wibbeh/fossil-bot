@@ -304,7 +304,8 @@ client.on("message", async (message) => {
     //console.log(_user);
     if (argArr.length > 1) {
       message.channel.send(`Hoo! More than one, I see!`);
-    } else if (argArr.length > 0) {
+    }
+    if (argArr.length > 0) {
       for (_item in argArr) {
         if (await _user.addHave(argArr[_item].toUpperCase().trim())) {
           addedList.push(argArr[_item].toUpperCase().trim());
