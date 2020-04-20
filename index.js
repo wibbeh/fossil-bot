@@ -416,7 +416,7 @@ client.on("message", async (message) => {
     const guild = await userFunctions.getGuild(guild_id);
     const guildUsers = await guild.getGuildUsers();
     var i = 1;
-    console.log(guildUsers);
+    //console.log(guildUsers);
 
     //const userItemsNeed = await
 
@@ -424,12 +424,12 @@ client.on("message", async (message) => {
     const kvpNeed = {};
 
     for (user of guildUsers) {
-      console.log(user);
+      //console.log(user);
       const userItemsNeed = await user.getItemsNeedUser();
-      console.log(userItemsNeed);
+      //console.log(userItemsNeed);
       for (item of userItemsNeed) {
         const whoHas = await user.getItemsHaveAllItem(item, guild_id);
-        console.log(whoHas);
+        //console.log(whoHas);
         if (whoHas.length) {
           kvpHave[item] = whoHas.map((t) => `${"<@" + t.uid + ">"}`);
 
