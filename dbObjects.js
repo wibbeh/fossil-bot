@@ -5,7 +5,7 @@ const { Op } = require("sequelize");
 const sequelize = new Sequelize("database", "username", "password", {
   host: "localhost",
   dialect: "sqlite",
-  logging: console.log,
+  logging: false,
   storage: "acitems.sqlite",
 });
 
