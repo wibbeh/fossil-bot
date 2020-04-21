@@ -5,7 +5,7 @@ const { Op } = require("sequelize");
 const sequelize = new Sequelize("database", "username", "password", {
   host: "localhost",
   dialect: "sqlite",
-  logging: false,
+  logging: console.log,
   storage: "acitems.sqlite",
 });
 
@@ -128,17 +128,20 @@ Users.prototype.getUserItems = async function () {
 
 Users.prototype.getItemsHaveAllItem = async function (item, guildID) {
   return await Users.findAll({
-    include: {
-      model: Guilds,
-      as: `utog`,
-      where: { gid: guildID },
-    },
-    include: {
-      model: Items,
-      as: `utoi`,
-      where: { name: { [Op.like]: item } },
-      through: { where: { amount_have: { [Op.ne]: 0 } } },
-    },
+    include: [
+      {
+        model: Guilds,
+        as: `utog`,
+        where: { gid: guildID },
+      },
+
+      {
+        model: Items,
+        as: `utoi`,
+        where: { name: { [Op.like]: item } },
+        through: { where: { amount_have: { [Op.ne]: 0 } } },
+      },
+    ],
   }).then(function (users) {
     return users;
   });
@@ -146,16 +149,18 @@ Users.prototype.getItemsHaveAllItem = async function (item, guildID) {
 
 Users.prototype.getItemsNeedAll = async function (guildID) {
   return await Users.findAll({
-    include: {
-      model: Guilds,
-      as: `utog`,
-      where: { gid: guildID },
-    },
-    include: {
-      model: Items,
-      as: `utoi`,
-      through: { where: { amount_need: { [Op.ne]: 0 } } },
-    },
+    include: [
+      {
+        model: Guilds,
+        as: `utog`,
+        where: { gid: guildID },
+      },
+      {
+        model: Items,
+        as: `utoi`,
+        through: { where: { amount_need: { [Op.ne]: 0 } } },
+      },
+    ],
   }).then(function (users) {
     return users;
   });

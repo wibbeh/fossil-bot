@@ -23,73 +23,76 @@ Reflect.defineProperty(userFunctions, "getGuild", {
 
 Reflect.defineProperty(userFunctions, "getUser", {
   value: async function add(_target) {
-    return Users.findOne({
-      where: { uid: _target.id },
-    }).then((user) => {
-      if (user) {
-        //user.balance += Number(amount);
-        return user;
-      } else {
-        return Users.create({
-          uid: _target.id,
-          balance: 10,
-        }).then(function (_newUser) {
-          const _guild = Guilds.findOne({
-            where: { gid: _target.lastMessage.channel.guild.id },
-          }).then(function (thisGuild) {
-            _newUser.addUtog(thisGuild);
-          });
-          return _newUser;
-        });
-      }
+    return await Guild_users.findOrCreate({
+      where: {
+        user_id: _target.id,
+        guild_id: _target.lastMessage.channel.guild.id,
+      },
+    }).then(async function (result) {
+      var guild_user = result[0],
+        created = result[1];
+      return await Users.findOne({
+        where: { uid: guild_user.user_id },
+      }).then((_user) => {
+        return _user;
+      });
     });
   },
 });
 
 Reflect.defineProperty(newGuild, "add", {
   value: async function add(guild) {
-    const boop = await Guilds.create({ gid: guild.id })
-      .then(async function (guilds) {
-        guild.members.fetch().then(async function (m) {
-          m.map(async function (mem) {
-            const usr = await Users.findOrCreate({
-              where: { uid: mem.id, balance: 10 },
-              defaults: { uid: mem.id, balance: 10 },
-            }).then(function (result) {
-              var u = result[0],
-                created = result[1];
-              guilds.addGtou(u);
-            });
-          });
-        });
+    return await Guilds.create({ gid: guild.id })
+      .then((guilds) => {
+        return guilds;
       })
       .catch((guilds) => {
         console.log(guilds);
       });
-    return boop;
   },
 });
 
 Reflect.defineProperty(newGuild, "blip", {
   value: async function blip(guild) {
-    const boop = await Guilds.destroy({
+    return await Guilds.destroy({
       where: { gid: guild.id },
     }).catch((guilds) => {
       console.log(guilds);
     });
-    return boop;
   },
 });
 
 Reflect.defineProperty(newUser, "add", {
   value: async function add(target) {
-    const usr = await Users.create({ uid: target.id, balance: 10 })
-      .then(function (u) {
-        u.addUtog(target.lastMessage.channel.guild.id);
-      })
-      .catch((u) => {
-        console.log(u);
+    const guild = await Guilds.findOne({
+      where: { gid: target.guild.id },
+    }).then(async function (guilds) {
+      const usr = await Users.findOrCreate({
+        where: { uid: target.id, balance: 10 },
+        defaults: { uid: target.id, balance: 10 },
+      }).then(function (result) {
+        var u = result[0],
+          created = result[1];
+        guilds.addGtou(u);
       });
+    });
+  },
+});
+
+Reflect.defineProperty(newUser, "remove", {
+  value: async function remove(target) {
+    const guild = await Guilds.findOne({
+      where: { gid: target.guild.id },
+    }).then(async function (guilds) {
+      const usr = await Users.findOrCreate({
+        where: { uid: target.id, balance: 10 },
+        defaults: { uid: target.id, balance: 10 },
+      }).then(function (result) {
+        var u = result[0],
+          created = result[1];
+        guilds.removeGtou(u);
+      });
+    });
   },
 });
 
@@ -108,7 +111,14 @@ client.on("guildCreate", async (guild) => {
 client.on("guildMemberAdd", (member) => {
   // Add member to guild db
   console.log(member.id + ` has joined the guild ` + member.guild.name);
-  newUser.add(member.id);
+  newUser.add(member);
+  console.log(member.id + ` added to guild db`);
+});
+
+client.on("guildMemberRemove", (member) => {
+  // Remove member from guild db
+  console.log(member.id + ` has left the guild ` + member.guild.name);
+  newUser.remove(member);
   console.log(member.id + ` added to guild db`);
 });
 
@@ -131,9 +141,9 @@ client.on("message", async (message) => {
 
   console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
 
-  if (target.id == `687803445423374366`) {
+  /*if (target.id == `687803445423374366`) {
     message.channel.send(`Pucker up!`);
-  }
+  }*/
 
   if (command === "balance") {
     const _user = await userFunctions.getUser(target);
@@ -144,9 +154,8 @@ client.on("message", async (message) => {
     return message.channel.send("J Stanks");
   } else if (command == "test") {
     console.log(`test`);
-
-    console.log(kvpHave.join(", "));
-    console.log(kvpNeed).join(", ");
+    const _user = await userFunctions.getUser(target);
+    console.log(_user);
   } else if (command == "help") {
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`Fossil Bot Cheat Sheet`)
@@ -431,19 +440,21 @@ client.on("message", async (message) => {
       //console.log(user);
       const userItemsNeed = await user.getItemsNeedUser();
       //console.log(userItemsNeed);
-      for (item of userItemsNeed) {
-        const whoHas = await user.getItemsHaveAllItem(item, guild_id);
-        //console.log(whoHas);
-        if (whoHas.length) {
-          kvpHave[item] = whoHas.map((t) => `${"<@" + t.uid + ">"}`);
+      if (userItemsNeed.length) {
+        for (item of userItemsNeed) {
+          const whoHas = await user.getItemsHaveAllItem(item, guild_id);
+          //console.log(whoHas);
+          if (whoHas.length) {
+            kvpHave[item] = whoHas.map((t) => `${"<@" + t.uid + ">"}`);
 
-          if (kvpNeed[item]) {
-            const tmp = [];
-            tmp.push(kvpNeed[item]);
-            tmp.push(`${"<@" + user.uid + ">"}`);
-            kvpNeed[item] = tmp.filter(Boolean);
-          } else {
-            kvpNeed[item] = `${"<@" + user.uid + ">"}`;
+            if (kvpNeed[item]) {
+              const tmp = [];
+              tmp.push(kvpNeed[item]);
+              tmp.push(`${"<@" + user.uid + ">"}`);
+              kvpNeed[item] = tmp.filter(Boolean);
+            } else {
+              kvpNeed[item] = `${"<@" + user.uid + ">"}`;
+            }
           }
         }
       }
