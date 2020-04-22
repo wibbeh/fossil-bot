@@ -114,12 +114,12 @@ client.on("guildCreate", async (guild) => {
   const boop = await newGuild.add(guild);
 });
 
-client.on("guildMemberAdd", (member) => {
+/*client.on("guildMemberAdd", (member) => {
   // Add member to guild db
   console.log(member.id + ` has joined the guild ` + member.guild.name);
   newUser.add(member);
   console.log(member.id + ` added to guild db`);
-});
+});*/
 
 client.on("guildMemberRemove", (member) => {
   // Remove member from guild db
