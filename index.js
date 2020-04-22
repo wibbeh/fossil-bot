@@ -90,13 +90,11 @@ Reflect.defineProperty(newUser, "remove", {
     const guild = await Guilds.findOne({
       where: { gid: target.guild.id },
     }).then(async function (guilds) {
-      const usr = await Users.findOrCreate({
+      const usr = await Users.findOne({
         where: { uid: target.id, balance: 10 },
-        defaults: { uid: target.id, balance: 10 },
-      }).then(function (result) {
-        var u = result[0],
-          created = result[1];
-        guilds.removeGtou(u);
+      }).then(async function (u) {
+        if (u) guilds.removeGtou(u);
+        return;
       });
     });
   },
@@ -125,13 +123,13 @@ client.on("guildMemberRemove", (member) => {
   // Remove member from guild db
   console.log(member.id + ` has left the guild ` + member.guild.name);
   newUser.remove(member);
-  console.log(member.id + ` added to guild db`);
+  console.log(member.id + ` removed from guild db`);
 });
 
 client.on("guildDelete", async (guild) => {
   console.log("Left a guild: " + guild.name);
   const boop = await newGuild.blip(guild);
-  console.log(boop);
+  console.log(guild.name + `deleted`);
 });
 
 client.on("message", async (message) => {
