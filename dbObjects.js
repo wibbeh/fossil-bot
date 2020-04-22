@@ -110,8 +110,15 @@ Users.prototype.removeFossil = async function (item) {
 
   if (UserItems.length) {
     for (i in UserItems) {
-      UserItems[i].dataValues.user_items.amount_need = 0;
-      UserItems[i].dataValues.user_items.amount_have = 0;
+      UserItems[i].dataValues.user_items.amount_need = UserItems[i].dataValues
+        .user_items.amount_need
+        ? UserItems[i].dataValues.user_items.amount_need - 1
+        : 0;
+      UserItems[i].dataValues.user_items.amount_have = UserItems[i].dataValues
+        .user_items.amount_have
+        ? UserItems[i].dataValues.user_items.amount_have - 1
+        : 0;
+      //UserItems[i].dataValues.user_items.amount_have = 0;
       UserItems[i].dataValues.user_items.save();
       return UserItems[i].name;
     }
