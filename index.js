@@ -31,9 +31,10 @@ Reflect.defineProperty(userFunctions, "getUser", {
     }).then(async function (result) {
       var guild_user = result[0],
         created = result[1];
-      return await Users.findOne({
+      return await Users.findOrCreate({
         where: { uid: guild_user.user_id },
-      }).then((_user) => {
+      }).then(async function (result) {
+        _user = result[0];
         return _user;
       });
     });
@@ -56,9 +57,14 @@ Reflect.defineProperty(newGuild, "blip", {
   value: async function blip(guild) {
     return await Guilds.destroy({
       where: { gid: guild.id },
-    }).catch((guilds) => {
-      console.log(guilds);
-    });
+    })
+      .then((guilds) => {
+        return guilds;
+        //guilds.removeGtou();
+      })
+      .catch((guilds) => {
+        console.log(guilds);
+      });
   },
 });
 
@@ -154,8 +160,14 @@ client.on("message", async (message) => {
     return message.channel.send("J Stanks");
   } else if (command == "test") {
     console.log(`test`);
-    const _user = await userFunctions.getUser(target);
-    console.log(_user);
+    //_target.lastMessage.channel.guild.id
+    /*const guild = await userFunctions.getGuild(
+      target.lastMessage.channel.guild.id
+    );
+    console.log("Left a guild: " + target.lastMessage.channel.guild.id);
+    const boop = await newGuild.blip(guild);
+    console.log(boop);
+    console.log(guild);*/
   } else if (command == "help") {
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`Fossil Bot Cheat Sheet`)
@@ -241,7 +253,8 @@ client.on("message", async (message) => {
       console.log(addedList);
     }
   } else if (command === "inventory") {
-    const user = await Users.findOne({ where: { uid: target.id } });
+    //const user = await Users.findOne({ where: { uid: target.id } });
+    const user = await userFunctions.getUser(target);
     const userItems = await user.getUserItems();
 
     if (!userItems.length)
