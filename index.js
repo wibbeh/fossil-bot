@@ -121,9 +121,9 @@ client.on("guildCreate", async (guild) => {
 
 client.on("guildMemberRemove", (member) => {
   // Remove member from guild db
-  console.log(member.id + ` has left the guild ` + member.guild.name);
+  //console.log(member.id + ` has left the guild ` + member.guild.name);
   newUser.remove(member);
-  console.log(member.id + ` removed from guild db`);
+  //console.log(member.id + ` removed from guild db`);
 });
 
 client.on("guildDelete", async (guild) => {
@@ -248,7 +248,7 @@ client.on("message", async (message) => {
           }
         }
       }
-      console.log(addedList);
+      //console.log(addedList);
     }
   } else if (command === "inventory") {
     //const user = await Users.findOne({ where: { uid: target.id } });
@@ -396,7 +396,7 @@ client.on("message", async (message) => {
     const user = await userFunctions.getUser(target);
     //const userItems = await user.getUserItems();
     const userItemsNeed = await user.getItemsNeedUser();
-    console.log(userItemsNeed);
+    //console.log(userItemsNeed);
     if (!userItemsNeed.length)
       return message.channel.send(
         `${target.tag}, looks like you don't need anything!`
@@ -416,7 +416,7 @@ client.on("message", async (message) => {
         }
       }
     }
-    console.log(kvp);
+    //console.log(kvp);
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`MY needs`)
       .setAuthor(`hoo HOO!`)
