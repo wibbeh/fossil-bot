@@ -156,16 +156,149 @@ client.on("message", async (message) => {
     );
   } else if (command == "whostanks") {
     return message.channel.send("J Stanks");
-  } else if (command == "test") {
-    console.log(`test`);
-    //_target.lastMessage.channel.guild.id
-    /*const guild = await userFunctions.getGuild(
-      target.lastMessage.channel.guild.id
-    );
-    console.log("Left a guild: " + target.lastMessage.channel.guild.id);
-    const boop = await newGuild.blip(guild);
-    console.log(boop);
-    console.log(guild);*/
+  } else if (command == "communism") {
+    //console.log(`test`);
+    const guild_id = message.guild.id;
+    const guild = await userFunctions.getGuild(guild_id);
+    const guildUsers = await guild.getGuildUsers();
+    var i = 0;
+    var k = 0;
+    var length_exceed = 0;
+    var indexes = [];
+    indexes[0] = 0;
+    var index_counter = 0;
+    //console.log(guildUsers);
+
+    //const userItemsNeed = await
+
+    var kvpHave = {};
+    var kvpNeed = {};
+
+    for (user of guildUsers) {
+      //console.log(user);
+      const userItemsNeed = await user.getItemsNeedUser();
+      //console.log(userItemsNeed);
+      if (userItemsNeed.length) {
+        for (item of userItemsNeed) {
+          const whoHas = await user.getItemsHaveAllItem(item, guild_id);
+          //console.log(whoHas);
+          if (whoHas.length) {
+            kvpHave[item] = whoHas.map((t) => `${"<@" + t.uid + ">"}`);
+
+            if (kvpNeed[item]) {
+              const tmp = [];
+              tmp.push(kvpNeed[item]);
+              tmp.push(`${"<@" + user.uid + ">"}`);
+              kvpNeed[item] = tmp.filter(Boolean);
+            } else {
+              kvpNeed[item] = `${"<@" + user.uid + ">"}`;
+            }
+          }
+        }
+      }
+    }
+    //console.log(kvpNeed);
+    //console.log(kvpHave);
+
+    /*
+     * Creates an embed with guilds starting from an index.
+     * param {number} start The index to start from.
+     */
+    const generateEmbed = (start) => {
+      i = 0;
+      k = 0;
+      //indexes[index_counter] = start;
+      length_exceed = 0;
+
+      //var sliceNeeds = {};
+      //const current = guilds.slice(start, start + 10);
+      /* .setTitle(`Fossils for the people`)
+      .setAuthor(`hoo HOO!`)
+      .setColor("00ff00")
+      .setTimestamp()
+      .setFooter(`Originally sent:`);*/
+
+      // you can of course customise this embed however you want
+      const embed = new Discord.MessageEmbed()
+        .setTitle(`Fossils for the people`)
+        .setColor("00ff00")
+        .setAuthor(`hoo HOO!`);
+
+      /*`Showing guilds ${start + 1}-${start + current.length} out of ${
+          guilds.length
+        }`*/
+      // );
+      for (var key in kvpNeed) {
+        if (i < 20) {
+          if (k >= start) {
+            const kvpHaveString = kvpHave[key];
+            const kvpNeedString = kvpNeed[key];
+            if (
+              kvpHave[key] &&
+              embed.length <
+                6000 - (kvpNeedString.length * 23 + kvpHaveString.length + 30)
+            ) {
+              embed.addFields(
+                {
+                  name: `${key}:`,
+                  value: `Who needs: ${kvpNeedString}\n Who has: ${kvpHaveString}`,
+                }
+                //{ name: '\u200B', value: '\u200B' },
+                //{ name: 'Needs:', value: `${need_list}`, },
+                //{ name: 'Inline field title', value: 'Some value here', inline: true },
+              );
+              i++;
+            } else if (kvpHave[key]) {
+              length_exceed = 1;
+            }
+          }
+          k++;
+        } else {
+          length_exceed = 1;
+        }
+      }
+
+      return embed;
+    };
+
+    // edit: you can store the message author like this:
+    const author = message.author;
+
+    // send the embed with the first 10 guilds
+    message.channel.send(generateEmbed(0)).then((dmessage) => {
+      // exit if there is only one page of guilds (no need for all of this)
+      if (!length_exceed) return;
+      // react with the right arrow (so that the user can click it) (left arrow isn't needed because it is the start)
+      dmessage.react("➡️");
+      const collector = dmessage.createReactionCollector(
+        // only collect left and right arrow reactions from the message author
+        (reaction, user) =>
+          ["⬅️", "➡️"].includes(reaction.emoji.name) && user.id === author.id,
+        // time out after a minute
+        { time: 60000 }
+      );
+
+      //let currentIndex = 0;
+      collector.on("collect", (reaction) => {
+        // remove the existing reactions
+        dmessage.reactions.removeAll().then(async () => {
+          // increase/decrease index
+          if (reaction.emoji.name === "⬅️") {
+            index_counter -= 1;
+          } else {
+            index_counter += 1;
+            indexes[index_counter] = indexes[index_counter - 1] + i;
+          }
+
+          // edit message with new embed
+          dmessage.edit(generateEmbed(indexes[index_counter]));
+          // react with left arrow if it isn't the start (await is used so that the right arrow always goes after the left)
+          if (index_counter !== 0) await dmessage.react("⬅️");
+          // react with right arrow if it isn't the end
+          if (length_exceed) dmessage.react("➡️");
+        });
+      });
+    });
   } else if (command == "help") {
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`Fossil Bot Cheat Sheet`)
@@ -345,14 +478,13 @@ client.on("message", async (message) => {
       );
       if (addedList.length) {
         for (str in addedList) {
-          message.channel.send(
-            addedList[str]
-              .toLowerCase()
-              .split(" ")
-              .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
-              .join(" ")
-          );
+          addedList[str] = addedList[str]
+            .toLowerCase()
+            .split(" ")
+            .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+            .join(" ");
         }
+        message.channel.send(addedList.join(", "));
       }
     }
   } else if (command === "need") {
@@ -379,14 +511,13 @@ client.on("message", async (message) => {
       );
       if (addedList.length) {
         for (str in addedList) {
-          message.channel.send(
-            addedList[str]
-              .toLowerCase()
-              .split(" ")
-              .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
-              .join(" ")
-          );
+          addedList[str] = addedList[str]
+            .toLowerCase()
+            .split(" ")
+            .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+            .join(" ");
         }
+        message.channel.send(addedList.join(", "));
       }
     }
     //`Wuh-oh... I can\'t seem to find ${arg} in our collection!`
@@ -435,7 +566,7 @@ client.on("message", async (message) => {
     //.setDescription(`${item_list}`)
     //.addField('to', newContent)
     return message.channel.send(editedEmbed);
-  } else if (command === "communism") {
+  } else if (command === "oldcommunism") {
     const guild_id = message.guild.id;
     const guild = await userFunctions.getGuild(guild_id);
     const guildUsers = await guild.getGuildUsers();
