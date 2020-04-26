@@ -314,25 +314,25 @@ client.on("message", async (message) => {
         },
         {
           name: "!have",
-          value: `Add fossils to your "HAVE" list. Usage: "!have fossil1, fossil2, fossil3...."`,
+          value: `Add fossils to your "HAVE" list. Usage: "!have fossil1, fossil2, fossil3...."\nEx: !have Amber, Ptera Body`,
         },
         //{ name: '\u200B', value: '\u200B' },
 
         {
           name: "!need",
-          value: `Add fossils to your "NEED" list. Usage: "!have fossil1, fossil2, fossil3...."`,
+          value: `Add fossils to your "NEED" list. Usage: "!have fossil1, fossil2, fossil3...."\nEx: !need Mammoth Torso, T. Rex skull`,
         },
         {
           name: "!bury",
-          value: `Removes fossils from your inventory. Usage: "!bury fossil1, fossil2, fossil3...."`,
+          value: `Removes fossils from your inventory. Usage: "!bury fossil1, fossil2, fossil3...."\nEx: !bury Amber`,
         },
         {
           name: "!inventory",
           value: `Displays all fossils on YOUR HAVE and NEED lists`,
         },
         {
-          name: "!whohas <fossil>",
-          value: `Check which users currently have a specific fossil. Usage: !whohas fossil1`,
+          name: "!whohas",
+          value: `Check which users currently have a specific fossil. Usage: !whohas fossil1\nEx: !whohas Ptera Body`,
         },
         {
           name: "!butwhataboutMYneeds",
@@ -340,7 +340,7 @@ client.on("message", async (message) => {
         },
         {
           name: "!communism",
-          value: `Attempts to match up all HAVE and NEED lists (WIP)`,
+          value: `Attempts to match up all HAVE and NEED lists`,
         }
         //{ name: 'Inline field title', value: 'Some value here', inline: true },
       );
