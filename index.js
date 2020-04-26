@@ -114,18 +114,18 @@ dbl.on("error", (e) => {
 client.once("ready", async () => {
   //const storedBalances =
   //storedBalances.forEach((b) => userList.set(b.user_id, b));
-  client.user.setActivity(`Serving ${client.guilds.size} servers`);
+  client.user.setActivity(`Serving ${client.guilds.cache.size} servers`);
 
   console.log(`Logged in as ${client.user.tag}!`);
 
   setInterval(() => {
-    dbl.postStats(client.guilds.size);
+    dbl.postStats(client.guilds.cache.size);
   }, 1800000);
 });
 
 client.on("guildCreate", async (guild) => {
   console.log("Joined a new guild: " + guild.name);
-  client.user.setActivity(`Serving ${client.guilds.size} servers`);
+  client.user.setActivity(`Serving ${client.guilds.cache.size} servers`);
   const boop = await newGuild.add(guild);
 });
 
@@ -145,7 +145,7 @@ client.on("guildMemberRemove", (member) => {
 
 client.on("guildDelete", async (guild) => {
   console.log("Left a guild: " + guild.name);
-  client.user.setActivity(`Serving ${client.guilds.size} servers`);
+  client.user.setActivity(`Serving ${client.guilds.cache.size} servers`);
   const boop = await newGuild.blip(guild);
   console.log(guild.name + `deleted`);
 });
