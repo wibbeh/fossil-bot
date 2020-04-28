@@ -154,12 +154,13 @@ client.on("message", async (message) => {
   if (message.author.bot) return;
   //userList.add(message.author.id, 1);
   //console.log(message);
-  if (message.content.endsWith(PREFIX)) return;
+  //if (message.content.endsWith(PREFIX)) return;
   if (!message.content.startsWith(PREFIX)) return;
   //console.log(message);
   if (message.channel.type == "dm") return;
   const input = message.content.slice(PREFIX.length).trim();
   if (!input.length) return;
+  if (!input.match(/\w+/)) return;
   const [, command, commandArgs] = input.match(/(\w+)\s*([\s\S]*)/);
   const target = message.mentions.users.first() || message.author;
 
@@ -460,16 +461,16 @@ client.on("message", async (message) => {
       }
 
       message.channel.send(`The following fossil(s) have been buried:`);
+
       if (addedList.length) {
         for (str in addedList) {
-          message.channel.send(
-            addedList[str]
-              .toLowerCase()
-              .split(" ")
-              .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
-              .join(" ")
-          );
+          addedList[str] = addedList[str]
+            .toLowerCase()
+            .split(" ")
+            .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+            .join(" ");
         }
+        message.channel.send(addedList.join(", "));
       }
     }
 
