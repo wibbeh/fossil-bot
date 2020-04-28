@@ -153,7 +153,8 @@ client.on("guildDelete", async (guild) => {
 client.on("message", async (message) => {
   if (message.author.bot) return;
   //userList.add(message.author.id, 1);
-
+  //console.log(message);
+  if (message.content.endsWith(PREFIX)) return;
   if (!message.content.startsWith(PREFIX)) return;
   //console.log(message);
   if (message.channel.type == "dm") return;
