@@ -164,20 +164,23 @@ client.on("message", async (message) => {
   const [, command, commandArgs] = input.match(/(\w+)\s*([\s\S]*)/);
   const target = message.mentions.users.first() || message.author;
 
-  console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
+  //console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
 
   /*if (target.id == `687803445423374366`) {
     message.channel.send(`Pucker up!`);
   }*/
 
   if (command === "balance") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     const _user = await userFunctions.getUser(target);
     return message.channel.send(
       `${target.tag} this bitch got ${_user.dataValues.balance} bells`
     );
   } else if (command == "whostanks") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     return message.channel.send("J Stanks");
   } else if (command == "communism") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     //console.log(`test`);
     const guild_id = message.guild.id;
     const guild = await userFunctions.getGuild(guild_id);
@@ -321,6 +324,7 @@ client.on("message", async (message) => {
       });
     });
   } else if (command == "help") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`Fossil Bot Cheat Sheet`)
       .setAuthor(`hoo HOO!`)
@@ -369,6 +373,7 @@ client.on("message", async (message) => {
     //.addField('to', newContent)
     message.channel.send(editedEmbed);
   } else if (command == "whohas") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     var argArr = commandArgs.split(",");
     const _user = await userFunctions.getUser(target);
     const addedList = [];
@@ -405,6 +410,7 @@ client.on("message", async (message) => {
       //console.log(addedList);
     }
   } else if (command === "inventory") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     //const user = await Users.findOne({ where: { uid: target.id } });
     const user = await userFunctions.getUser(target);
     const userItems = await user.getUserItems();
@@ -442,6 +448,7 @@ client.on("message", async (message) => {
       );
     message.channel.send(editedEmbed);
   } else if (command === "bury") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     var argArr = commandArgs.split(",");
     const _user = await userFunctions.getUser(target);
     const addedList = [];
@@ -476,6 +483,7 @@ client.on("message", async (message) => {
 
     //
   } else if (command === "have") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     var argArr = commandArgs.split(",");
     const _user = await userFunctions.getUser(target);
     const addedList = [];
@@ -509,6 +517,7 @@ client.on("message", async (message) => {
       }
     }
   } else if (command === "need") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     var argArr = commandArgs.split(",");
     const _user = await userFunctions.getUser(target);
     const addedList = [];
@@ -545,6 +554,7 @@ client.on("message", async (message) => {
 
     //var argUp = arg.replace(/(^\w{1})|(\s{1}\w{1})/g, (match) =>
   } else if (command === "butwhataboutMYneeds") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     const user = await userFunctions.getUser(target);
     //const userItems = await user.getUserItems();
     const userItemsNeed = await user.getItemsNeedUser();
@@ -588,6 +598,7 @@ client.on("message", async (message) => {
     //.addField('to', newContent)
     return message.channel.send(editedEmbed);
   } else if (command === "oldcommunism") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     const guild_id = message.guild.id;
     const guild = await userFunctions.getGuild(guild_id);
     const guildUsers = await guild.getGuildUsers();
@@ -656,6 +667,7 @@ client.on("message", async (message) => {
     //.addField('to', newContent)
     return message.channel.send(editedEmbed);
   } else if (command === "museum") {
+    console.log(`${target.tag} said ${PREFIX}${command} ${commandArgs}`);
     const itemList = await Items.findAll();
     message.channel.send(`We currently have the following exhibits:`);
     return message.channel.send(itemList.map((i) => `${i.name}`).join("\n"), {
