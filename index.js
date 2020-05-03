@@ -420,6 +420,8 @@ client.on("message", async (message) => {
     //const user = await Users.findOne({ where: { uid: target.id } });
     const user = await userFunctions.getUser(target);
     const userItems = await user.getUserItems();
+    //const have_list_trim = ``;
+    //const need_list_trim = ``;
 
     if (!userItems.length)
       return message.channel.send(`${target.tag} ain't got no fossils!`);
@@ -429,7 +431,17 @@ client.on("message", async (message) => {
     const need_list = userItems
       .map((t) => (t.user_items.amount_need ? t.name : ``))
       .filter(Boolean);
-
+    if (have_list.join().length > 1000) {
+      var have_list_trim = have_list.join().slice(0, 1000) + `...`;
+    } else {
+      var have_list_trim = have_list;
+    }
+    if (need_list.join().length > 1000) {
+      var need_list_trim = need_list.join().slice(0, 1000) + `...`;
+    } else {
+      var need_list_trim = need_list;
+    }
+    //console.log(have_list);
     //const have_list_css = String("```yaml\n${have_list}```");
     const editedEmbed = new Discord.MessageEmbed()
       .setTitle(`${target.tag}'s Inventory:`)
@@ -441,14 +453,14 @@ client.on("message", async (message) => {
         {
           name: "Has:",
           value: `${
-            have_list.length ? have_list : `Nothing. Zip. Zero. Zilch`
+            have_list_trim.length ? have_list_trim : `Nothing. Zip. Zero. Zilch`
           }`,
         },
         //{ name: '\u200B', value: '\u200B' },
         {
           name: "Needs:",
           value: `${
-            need_list.length ? need_list : `Nothing. Zip. Zero. Zilch`
+            need_list_trim.length ? need_list_trim : `Nothing. Zip. Zero. Zilch`
           }`,
         }
       );
